@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		131010932E9DB204006F4874 /* tmpdebug_checklist.md in Resources */ = {isa = PBXBuildFile; fileRef = 131010922E9DB204006F4874 /* tmpdebug_checklist.md */; };
+		131010972E9DC76B006F4874 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 131010962E9DC76B006F4874 /* Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		131010922E9DB204006F4874 /* tmpdebug_checklist.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = tmpdebug_checklist.md; sourceTree = "<group>"; };
+		131010962E9DC76B006F4874 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		13E5CEC12E9DA211004ACAFA /* foodtrackerv2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = foodtrackerv2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -37,6 +39,7 @@
 		13E5CEB82E9DA211004ACAFA = {
 			isa = PBXGroup;
 			children = (
+				131010962E9DC76B006F4874 /* Info.plist */,
 				13E5CEC32E9DA211004ACAFA /* foodtrackerv2 */,
 				13E5CEC22E9DA211004ACAFA /* Products */,
 				131010922E9DB204006F4874 /* tmpdebug_checklist.md */,
@@ -116,6 +119,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				131010932E9DB204006F4874 /* tmpdebug_checklist.md in Resources */,
+				131010972E9DC76B006F4874 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
