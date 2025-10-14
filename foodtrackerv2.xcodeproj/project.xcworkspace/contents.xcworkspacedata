@@ -4,10 +4,4 @@
    <FileRef
       location = "self:">
    </FileRef>
-   <FileRef
-      location = "group:tmpxcode_cloud_checklist.md">
-   </FileRef>
-   <FileRef
-      location = "group:Info_plist_corrected.xml">
-   </FileRef>
 </Workspace>
