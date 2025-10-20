@@ -99,7 +99,7 @@ class FoodAnalysisService: ObservableObject {
     @Published var lastAnalysis: FoodAnalysis?
     @Published var errorMessage: String?
     
-    private let baseURL = "https://your-app-name.herokuapp.com" // Will be updated after Heroku deployment // Your laptop's IP address
+    private let baseURL = "https://your-railway-app.railway.app" // Update this with your actual Railway URL after deployment
     private let session = URLSession.shared
     
     func analyzeFoodImage(_ image: UIImage) async throws -> FoodAnalysis {
