@@ -18,7 +18,9 @@ app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://10.20.10.206:3000'],
+  origin: process.env.NODE_ENV === 'production' 
+    ? true // Allow all origins in production (Railway)
+    : (process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://10.20.10.206:3000']),
   credentials: true
 };
 app.use(cors(corsOptions));
