@@ -1,9 +1,15 @@
 import SwiftUI
+import SwiftUI
 import Combine
 
 struct DailySummaryView: View {
     @ObservedObject var analysis: NutritionAnalysis
     @State private var showingSuggestions = false
+    
+    // Computed property to avoid multiple expensive calls
+    private var dailySummary: DailySummary {
+        analysis.generateDailySummary()
+    }
     
     var body: some View {
         NavigationView {
@@ -17,6 +23,9 @@ struct DailySummaryView: View {
                     
                     // Nutrition Overview
                     nutritionOverviewSection
+                    
+                    // Recent Food Analysis
+                    recentFoodAnalysisSection
                     
                     // Meal Breakdown
                     mealBreakdownSection
@@ -134,13 +143,80 @@ struct DailySummaryView: View {
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
     
+    // MARK: - Recent Food Analysis Section
+    private var recentFoodAnalysisSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Recent Food Analysis")
+                .font(.headline)
+            
+            if analysis.dailyLog.foodItems.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "camera.fill")
+                        .font(.title)
+                        .foregroundColor(.gray)
+                    
+                    Text("No food logged yet")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Take a photo to get started!")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+            } else {
+                ForEach(Array(analysis.dailyLog.foodItems.suffix(3))) { item in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.name)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Text("\(Int(item.calories)) cal • \(Int(item.protein))g protein")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("\(Int(item.healthScore))/10")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(item.healthScoreColor)
+                            
+                            HStack(spacing: 1) {
+                                ForEach(0..<min(Int(item.healthScore), 10), id: \.self) { _ in
+                                    Image(systemName: "star.fill")
+                                        .font(.caption2)
+                                        .foregroundColor(.yellow)
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(8)
+                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+    
     // MARK: - Meal Breakdown Section
     private var mealBreakdownSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Meal Breakdown")
                 .font(.headline)
             
-            ForEach(analysis.generateDailySummary().mealBreakdown, id: \.mealType) { breakdown in
+            ForEach(dailySummary.mealBreakdown, id: \.mealType) { breakdown in
                 MealBreakdownRow(breakdown: breakdown)
             }
         }
@@ -156,10 +232,10 @@ struct DailySummaryView: View {
             Text("Goals Status")
                 .font(.headline)
             
-            ForEach(Array(analysis.generateDailySummary().goalsMet.keys.sorted()), id: \.self) { goal in
+            ForEach(Array(dailySummary.goalsMet.keys.sorted()), id: \.self) { goal in
                 HStack {
-                    Image(systemName: analysis.generateDailySummary().goalsMet[goal] == true ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(analysis.generateDailySummary().goalsMet[goal] == true ? .green : .red)
+                    Image(systemName: dailySummary.goalsMet[goal] == true ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(dailySummary.goalsMet[goal] == true ? .green : .red)
                     
                     Text(goal)
                         .font(.subheadline)
@@ -275,7 +351,7 @@ struct MealBreakdownRow: View {
             
             if breakdown.averageHealthScore > 0 {
                 HStack(spacing: 2) {
-                    ForEach(0..<Int(breakdown.averageHealthScore), id: \.self) { _ in
+                    ForEach(0..<min(Int(breakdown.averageHealthScore), 10), id: \.self) { _ in
                         Image(systemName: "star.fill")
                             .font(.caption)
                             .foregroundColor(.yellow)
@@ -294,4 +370,20 @@ extension DateFormatter {
         formatter.dateStyle = .full
         return formatter
     }()
+}
+
+// MARK: - FoodItem Extension for Health Score Color
+extension FoodItem {
+    var healthScoreColor: Color {
+        switch healthScore {
+        case 8...10:
+            return .green
+        case 6..<8:
+            return .yellow
+        case 4..<6:
+            return .orange
+        default:
+            return .red
+        }
+    }
 }

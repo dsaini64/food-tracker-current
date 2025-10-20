@@ -1,100 +1,136 @@
 import Foundation
 import UIKit
-import Vision
 import Combine
 
 // MARK: - Food Recognition Service
 class FoodRecognitionService: ObservableObject {
     @Published var isAnalyzing = false
     @Published var recognitionResult: FoodRecognitionResult?
+    @Published var errorMessage: String?
     
-    func analyzeFoodImage(_ image: UIImage) {
-        isAnalyzing = true
+    private let foodAnalysisService = FoodAnalysisService()
+    
+    func analyzeFoodImage(_ image: UIImage, mealType: FoodItem.MealType = .snack) {
+        print("🍎 Starting food analysis...")
+        print("🍎 Image size: \(image.size)")
         
-        // Simulate API call delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.performFoodRecognition(image)
+        // Set analyzing state immediately on main thread
+        DispatchQueue.main.async {
+            self.isAnalyzing = true
+            self.errorMessage = nil
+        }
+        
+        // Small delay to ensure UI updates before starting analysis
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+            do {
+                print("🍎 Sending image to backend...")
+                let analysis = try await foodAnalysisService.analyzeFoodImage(image)
+                print("🍎 Received analysis from backend: \(analysis)")
+                await MainActor.run {
+                    self.processAnalysis(analysis, image: image, mealType: mealType)
+                }
+            } catch {
+                print("🍎 Error during analysis: \(error)")
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isAnalyzing = false
+                }
+            }
         }
     }
     
-    private func performFoodRecognition(_ image: UIImage) {
-        // In a real app, this would use a food recognition API like:
-        // - Google Vision API
-        // - Clarifai Food API
-        // - Microsoft Computer Vision API
-        // - Custom ML model
+    private func processAnalysis(_ analysis: FoodAnalysis, image: UIImage, mealType: FoodItem.MealType) {
+        print("🍎 Processing analysis with \(analysis.foods.count) foods")
+        // Convert the new analysis format to the existing result format
+        if let firstFood = analysis.foods.first {
+            print("🍎 First food: \(firstFood.name), calories: \(firstFood.calories)")
+            let healthScore = calculateHealthScore(from: firstFood)
+            
+            let result = FoodRecognitionResult(
+                name: firstFood.name,
+                confidence: firstFood.confidence,
+                calories: firstFood.calories,
+                protein: firstFood.protein,
+                carbs: firstFood.carbs,
+                fat: firstFood.fat,
+                fiber: firstFood.fiber,
+                sugar: 0, // Not provided in new format
+                sodium: 0, // Not provided in new format
+                healthScore: healthScore
+            )
+            
+            self.recognitionResult = result
+            print("🍎 Set recognitionResult: \(result.name), \(result.calories) calories")
+            
+            // Only add to daily log if it's a real food (not unidentified)
+            if !firstFood.name.lowercased().contains("unidentified") && 
+               !firstFood.name.lowercased().contains("unknown") &&
+               firstFood.calories > 0 {
+                addToDailyLog(result, image: image, mealType: mealType)
+            } else {
+                print("🍎 Skipping unidentified food - not adding to daily log")
+            }
+        }
         
-        // For demo purposes, we'll simulate recognition with mock data
-        let mockResults = generateMockFoodRecognition()
-        self.recognitionResult = mockResults
         self.isAnalyzing = false
     }
     
-    private func generateMockFoodRecognition() -> FoodRecognitionResult {
-        let foodOptions = [
-            FoodRecognitionResult(
-                name: "Grilled Chicken Breast",
-                confidence: 0.92,
-                calories: 165,
-                protein: 31,
-                carbs: 0,
-                fat: 3.6,
-                fiber: 0,
-                sugar: 0,
-                sodium: 74,
-                healthScore: 9
-            ),
-            FoodRecognitionResult(
-                name: "Mixed Green Salad",
-                confidence: 0.88,
-                calories: 25,
-                protein: 2,
-                carbs: 5,
-                fat: 0.5,
-                fiber: 2,
-                sugar: 3,
-                sodium: 15,
-                healthScore: 10
-            ),
-            FoodRecognitionResult(
-                name: "Pasta with Marinara",
-                confidence: 0.85,
-                calories: 220,
-                protein: 8,
-                carbs: 44,
-                fat: 2,
-                fiber: 3,
-                sugar: 8,
-                sodium: 320,
-                healthScore: 6
-            ),
-            FoodRecognitionResult(
-                name: "Apple",
-                confidence: 0.95,
-                calories: 95,
-                protein: 0.5,
-                carbs: 25,
-                fat: 0.3,
-                fiber: 4,
-                sugar: 19,
-                sodium: 2,
-                healthScore: 9
-            ),
-            FoodRecognitionResult(
-                name: "French Fries",
-                confidence: 0.90,
-                calories: 365,
-                protein: 4,
-                carbs: 63,
-                fat: 11,
-                fiber: 6,
-                sugar: 0.3,
-                sodium: 246,
-                healthScore: 3
-            )
-        ]
+    private func addToDailyLog(_ result: FoodRecognitionResult, image: UIImage, mealType: FoodItem.MealType = .snack) {
+        // Convert image to data for storage with lower quality to reduce memory usage
+        let imageData = image.jpegData(compressionQuality: 0.3)
         
-        return foodOptions.randomElement() ?? foodOptions[0]
+        // Create a FoodItem from the result
+        let foodItem = FoodItem(
+            name: result.name,
+            calories: result.calories,
+            protein: result.protein,
+            carbs: result.carbs,
+            fat: result.fat,
+            fiber: result.fiber,
+            sugar: result.sugar,
+            sodium: result.sodium,
+            timestamp: Date(),
+            imageData: imageData,
+            mealType: mealType,
+            healthScore: result.healthScore
+        )
+        
+        // Add to daily log (this would need to be injected or accessed via a shared instance)
+        // For now, we'll use a notification to update the daily log
+        NotificationCenter.default.post(
+            name: NSNotification.Name("FoodAnalyzed"),
+            object: foodItem
+        )
+    }
+    
+    private func calculateHealthScore(from analyzedFood: AnalyzedFood) -> Int {
+        // Don't penalize unidentified foods - give them a neutral score
+        if analyzedFood.name.lowercased().contains("unidentified") || 
+           analyzedFood.name.lowercased().contains("unknown") ||
+           analyzedFood.calories == 0 {
+            return 5 // Neutral score for unidentified foods
+        }
+        
+        var score = 5 // Base score
+        
+        // Protein bonus
+        if analyzedFood.protein > 20 { score += 2 }
+        else if analyzedFood.protein > 10 { score += 1 }
+        
+        // Fiber bonus
+        if analyzedFood.fiber > 5 { score += 2 }
+        else if analyzedFood.fiber > 2 { score += 1 }
+        
+        // Fat penalty for high fat
+        if analyzedFood.fat > 20 { score -= 2 }
+        else if analyzedFood.fat > 10 { score -= 1 }
+        
+        // Calorie penalty for very high calories
+        if analyzedFood.calories > 500 { score -= 2 }
+        else if analyzedFood.calories > 300 { score -= 1 }
+        
+        return max(1, min(10, score))
     }
 }
 
