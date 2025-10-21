@@ -5,6 +5,7 @@ import UIKit
 
 struct LiveCameraView: UIViewRepresentable {
     @Binding var isCapturing: Bool
+    @Binding var isFlashOn: Bool
     let onImageCaptured: (UIImage) -> Void
     
     func makeUIView(context: Context) -> CameraPreviewView {
@@ -21,6 +22,9 @@ struct LiveCameraView: UIViewRepresentable {
                 isCapturing = false
             }
         }
+        
+        // Handle flash toggle
+        context.coordinator.setFlashMode(isFlashOn ? .on : .off)
     }
     
     func makeCoordinator() -> Coordinator {
@@ -41,6 +45,7 @@ struct LiveCameraView: UIViewRepresentable {
         let parent: LiveCameraView
         var captureSession: AVCaptureSession?
         var photoOutput: AVCapturePhotoOutput?
+        var captureDevice: AVCaptureDevice?
         
         init(_ parent: LiveCameraView) {
             self.parent = parent
@@ -74,6 +79,7 @@ struct LiveCameraView: UIViewRepresentable {
                 // Store references
                 self.captureSession = captureSession
                 self.photoOutput = output
+                self.captureDevice = backCamera
                 
                 // Start session on background queue
                 DispatchQueue.global(qos: .userInitiated).async {
@@ -117,6 +123,20 @@ struct LiveCameraView: UIViewRepresentable {
             
             DispatchQueue.main.async {
                 self.parent.onImageCaptured(image)
+            }
+        }
+        
+        func setFlashMode(_ mode: AVCaptureDevice.FlashMode) {
+            guard let device = captureDevice else { return }
+            
+            do {
+                try device.lockForConfiguration()
+                if device.hasFlash {
+                    device.flashMode = mode
+                }
+                device.unlockForConfiguration()
+            } catch {
+                print("Error setting flash mode: \(error)")
             }
         }
     }

@@ -7,12 +7,14 @@ struct SnapchatCameraView: View {
     @State private var isCapturing = false
     @State private var showingImagePicker = false
     @State private var capturedImage: UIImage?
+    @State private var isFlashOn = false
     
     var body: some View {
         ZStack {
             // Live Camera Feed
             LiveCameraView(
                 isCapturing: $isCapturing,
+                isFlashOn: $isFlashOn,
                 onImageCaptured: { image in
                     print("📱 Image captured, size: \(image.size)")
                     capturedImage = image
@@ -40,10 +42,12 @@ struct SnapchatCameraView: View {
                     
                     // Quick Actions
                     HStack(spacing: 20) {
-                        Button(action: {}) {
-                            Image(systemName: "flashlight.off.fill")
+                        Button(action: {
+                            isFlashOn.toggle()
+                        }) {
+                            Image(systemName: isFlashOn ? "flashlight.on.fill" : "flashlight.off.fill")
                                 .font(.title2)
-                                .foregroundColor(.white)
+                                .foregroundColor(isFlashOn ? .yellow : .white)
                         }
                     }
                 }
