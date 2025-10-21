@@ -28,7 +28,7 @@ class FoodRecognitionService: ObservableObject {
             do {
                 // Update progress
                 await MainActor.run {
-                    self.analysisProgress = "Sending to server..."
+                    self.analysisProgress = "Analyzing..."
                 }
                 
                 print("🍎 Sending image to backend...")
