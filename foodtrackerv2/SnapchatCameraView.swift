@@ -125,9 +125,17 @@ struct SnapchatCameraView: View {
                     Spacer()
                     
                     VStack(spacing: 12) {
-                        Text("Food Analysis")
-                            .font(.headline)
-                            .foregroundColor(.white)
+                        VStack(spacing: 4) {
+                            Text("Food Analysis")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            if foodRecognition.detectedFoodsCount > 1 {
+                                Text("\(foodRecognition.detectedFoodsCount) foods detected")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                        }
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Name: \(result.name)")

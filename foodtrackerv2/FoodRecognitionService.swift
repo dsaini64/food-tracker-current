@@ -8,6 +8,7 @@ class FoodRecognitionService: ObservableObject {
     @Published var recognitionResult: FoodRecognitionResult?
     @Published var errorMessage: String?
     @Published var analysisProgress: String = ""
+    @Published var detectedFoodsCount: Int = 0
     
     private let foodAnalysisService = FoodAnalysisService()
     
@@ -51,37 +52,55 @@ class FoodRecognitionService: ObservableObject {
     
     private func processAnalysis(_ analysis: FoodAnalysis, image: UIImage, mealType: FoodItem.MealType) {
         print("🍎 Processing analysis with \(analysis.foods.count) foods")
-        // Convert the new analysis format to the existing result format
-        if let firstFood = analysis.foods.first {
-            print("🍎 First food: \(firstFood.name), calories: \(firstFood.calories)")
-            let healthScore = calculateHealthScore(from: firstFood)
+        
+        // Process all foods, not just the first one
+        var validFoods: [FoodRecognitionResult] = []
+        
+        for (index, food) in analysis.foods.enumerated() {
+            print("🍎 Processing food \(index + 1): \(food.name), calories: \(food.calories)")
             
-            let result = FoodRecognitionResult(
-                name: firstFood.name,
-                confidence: firstFood.confidence,
-                calories: firstFood.calories,
-                protein: firstFood.protein,
-                carbs: firstFood.carbs,
-                fat: firstFood.fat,
-                fiber: firstFood.fiber,
-                sugar: 0, // Not provided in new format
-                sodium: 0, // Not provided in new format
-                healthScore: healthScore
-            )
-            
-            self.recognitionResult = result
-            print("🍎 Set recognitionResult: \(result.name), \(result.calories) calories")
-            
-            // Only add to daily log if it's a real food (not unidentified)
-            if !firstFood.name.lowercased().contains("unidentified") && 
-               !firstFood.name.lowercased().contains("unknown") &&
-               firstFood.calories > 0 {
-                addToDailyLog(result, image: image, mealType: mealType)
+            // Only process real foods (not unidentified)
+            if !food.name.lowercased().contains("unidentified") && 
+               !food.name.lowercased().contains("unknown") &&
+               food.calories > 0 {
+                
+                let healthScore = calculateHealthScore(from: food)
+                
+                let result = FoodRecognitionResult(
+                    name: food.name,
+                    confidence: food.confidence,
+                    calories: food.calories,
+                    protein: food.protein,
+                    carbs: food.carbs,
+                    fat: food.fat,
+                    fiber: food.fiber,
+                    sugar: 0, // Not provided in new format
+                    sodium: 0, // Not provided in new format
+                    healthScore: healthScore
+                )
+                
+                validFoods.append(result)
+                print("🍎 Added valid food: \(result.name), \(result.calories) calories")
             } else {
-                print("🍎 Skipping unidentified food - not adding to daily log")
+                print("🍎 Skipping unidentified food: \(food.name)")
             }
         }
         
+        // Set the first valid food as the main result for UI display
+        if let firstValidFood = validFoods.first {
+            self.recognitionResult = firstValidFood
+            print("🍎 Set main recognitionResult: \(firstValidFood.name)")
+        }
+        
+        // Add all valid foods to daily log
+        for foodResult in validFoods {
+            addToDailyLog(foodResult, image: image, mealType: mealType)
+        }
+        
+        // Update detected foods count for UI
+        self.detectedFoodsCount = validFoods.count
+        
+        print("🍎 Added \(validFoods.count) foods to daily log")
         self.isAnalyzing = false
     }
     
@@ -159,4 +178,5 @@ struct FoodRecognitionResult {
     var confidencePercentage: Int {
         Int(confidence * 100)
     }
+}
 }
