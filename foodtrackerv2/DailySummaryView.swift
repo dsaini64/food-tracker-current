@@ -5,6 +5,7 @@ import Combine
 struct DailySummaryView: View {
     @ObservedObject var analysis: NutritionAnalysis
     @State private var showingSuggestions = false
+    @State private var showingFoodManagement = false
     
     // Computed property to avoid multiple expensive calls
     private var dailySummary: DailySummary {
@@ -40,6 +41,16 @@ struct DailySummaryView: View {
             }
             .navigationTitle("Daily Summary")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Manage Foods") {
+                        showingFoodManagement = true
+                    }
+                }
+            }
+            .sheet(isPresented: $showingFoodManagement) {
+                FoodManagementView(analysis: analysis)
+            }
         }
     }
     
@@ -168,46 +179,54 @@ struct DailySummaryView: View {
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
             } else {
-                ForEach(Array(analysis.dailyLog.foodItems.suffix(3))) { item in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.name)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                List {
+                    ForEach(Array(analysis.dailyLog.foodItems.suffix(3))) { item in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.name)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                
+                                Text("\(Int(item.calories)) cal • \(Int(item.protein))g protein")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                             
-                            Text("\(Int(item.calories)) cal • \(Int(item.protein))g protein")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("\(Int(item.healthScore))/10")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(item.healthScoreColor)
+                            Spacer()
                             
-                            HStack(spacing: 1) {
-                                ForEach(0..<min(Int(item.healthScore), 10), id: \.self) { _ in
-                                    Image(systemName: "star.fill")
-                                        .font(.caption2)
-                                        .foregroundColor(.yellow)
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("\(Int(item.healthScore))/10")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(item.healthScoreColor)
+                                
+                                HStack(spacing: 1) {
+                                    ForEach(0..<min(Int(item.healthScore), 10), id: \.self) { _ in
+                                        Image(systemName: "star.fill")
+                                            .font(.caption2)
+                                            .foregroundColor(.yellow)
+                                    }
                                 }
                             }
                         }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(8)
+                        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(8)
-                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button("Delete", role: .destructive) {
-                            analysis.dailyLog.removeFoodItem(item)
+                    .onDelete { indexSet in
+                        let items = Array(analysis.dailyLog.foodItems.suffix(3))
+                        for index in indexSet {
+                            if index < items.count {
+                                analysis.dailyLog.removeFoodItem(items[index])
+                            }
                         }
-                        .tint(.red)
                     }
                 }
+                .listStyle(PlainListStyle())
+                .frame(height: 200)
             }
         }
         .padding()
