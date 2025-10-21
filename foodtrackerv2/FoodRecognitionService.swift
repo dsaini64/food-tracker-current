@@ -179,4 +179,4 @@ struct FoodRecognitionResult {
         Int(confidence * 100)
     }
 }
-}
+

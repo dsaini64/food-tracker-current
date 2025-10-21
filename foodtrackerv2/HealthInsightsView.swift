@@ -53,12 +53,12 @@ struct HealthInsightsView: View {
             Text("Health Trends")
                 .font(.headline)
             
-            // Mock trend data - in a real app, this would come from historical data
+            // Real-time data from daily log
             VStack(spacing: 12) {
                 TrendCard(
                     title: "Average Health Score",
                     currentValue: analysis.overallHealthScore,
-                    previousValue: analysis.overallHealthScore - 0.5,
+                    previousValue: max(0, analysis.overallHealthScore - 0.5),
                     unit: "/10",
                     color: analysis.healthScoreColor
                 )
@@ -66,7 +66,7 @@ struct HealthInsightsView: View {
                 TrendCard(
                     title: "Daily Calories",
                     currentValue: analysis.dailyLog.totalCalories,
-                    previousValue: analysis.dailyLog.totalCalories - 50,
+                    previousValue: max(0, analysis.dailyLog.totalCalories - 50),
                     unit: "kcal",
                     color: .blue
                 )
@@ -74,9 +74,17 @@ struct HealthInsightsView: View {
                 TrendCard(
                     title: "Protein Intake",
                     currentValue: analysis.dailyLog.totalProtein,
-                    previousValue: analysis.dailyLog.totalProtein - 10,
+                    previousValue: max(0, analysis.dailyLog.totalProtein - 10),
                     unit: "g",
                     color: .green
+                )
+                
+                TrendCard(
+                    title: "Food Items Today",
+                    currentValue: Double(analysis.dailyLog.foodItems.count),
+                    previousValue: max(0, Double(analysis.dailyLog.foodItems.count) - 1),
+                    unit: "items",
+                    color: .purple
                 )
             }
         }
@@ -94,20 +102,25 @@ struct HealthInsightsView: View {
             
             VStack(spacing: 12) {
                 PatternCard(
-                    title: "Most Common Foods",
-                    items: ["Chicken Breast", "Mixed Salad", "Apple", "Greek Yogurt"],
+                    title: "Today's Foods",
+                    items: analysis.dailyLog.foodItems.map { $0.name },
                     icon: "fork.knife"
                 )
                 
                 PatternCard(
-                    title: "Best Meal Times",
-                    items: ["Breakfast: 8:00 AM", "Lunch: 12:30 PM", "Dinner: 7:00 PM"],
+                    title: "Meal Distribution",
+                    items: [
+                        "Breakfast: \(analysis.dailyLog.getFoodItems(for: .breakfast).count) items",
+                        "Lunch: \(analysis.dailyLog.getFoodItems(for: .lunch).count) items", 
+                        "Dinner: \(analysis.dailyLog.getFoodItems(for: .dinner).count) items",
+                        "Snacks: \(analysis.dailyLog.getFoodItems(for: .snack).count) items"
+                    ],
                     icon: "clock"
                 )
                 
                 PatternCard(
-                    title: "Healthiest Choices",
-                    items: ["Grilled Chicken", "Fresh Vegetables", "Whole Grains"],
+                    title: "Health Scores",
+                    items: analysis.dailyLog.foodItems.map { "\($0.name): \($0.healthScore)/10" },
                     icon: "heart.fill"
                 )
             }
@@ -125,26 +138,49 @@ struct HealthInsightsView: View {
                 .font(.headline)
             
             VStack(spacing: 12) {
-                RecommendationCard(
-                    title: "Increase Protein",
-                    description: "Add more lean proteins to reach your daily goal",
-                    action: "Try grilled fish or legumes",
-                    color: .green
-                )
+                // Protein recommendation based on actual progress
+                if analysis.proteinProgress < 0.8 {
+                    RecommendationCard(
+                        title: "Increase Protein",
+                        description: "You're at \(Int(analysis.proteinProgress * 100))% of your protein goal",
+                        action: "Add lean proteins like chicken or fish",
+                        color: .green
+                    )
+                }
                 
-                RecommendationCard(
-                    title: "Hydration Reminder",
-                    description: "Aim for 8 glasses of water daily",
-                    action: "Set hourly reminders",
-                    color: .blue
-                )
+                // Calorie recommendation
+                if analysis.caloriesProgress < 0.7 {
+                    RecommendationCard(
+                        title: "Add More Calories",
+                        description: "You're at \(Int(analysis.caloriesProgress * 100))% of your calorie goal",
+                        action: "Consider a healthy snack",
+                        color: .blue
+                    )
+                } else if analysis.caloriesProgress > 1.2 {
+                    RecommendationCard(
+                        title: "Calorie Balance",
+                        description: "You've exceeded your daily calorie goal",
+                        action: "Consider lighter options for remaining meals",
+                        color: .orange
+                    )
+                }
                 
-                RecommendationCard(
-                    title: "Meal Timing",
-                    description: "Consider eating dinner 2-3 hours before bed",
-                    action: "Plan evening meals",
-                    color: .orange
-                )
+                // Health score recommendation
+                if analysis.overallHealthScore < 6 {
+                    RecommendationCard(
+                        title: "Improve Food Choices",
+                        description: "Your average health score is \(String(format: "%.1f", analysis.overallHealthScore))/10",
+                        action: "Add more vegetables and whole foods",
+                        color: .red
+                    )
+                } else {
+                    RecommendationCard(
+                        title: "Great Job!",
+                        description: "Your health score is \(String(format: "%.1f", analysis.overallHealthScore))/10",
+                        action: "Keep up the excellent choices!",
+                        color: .green
+                    )
+                }
             }
         }
         .padding()
