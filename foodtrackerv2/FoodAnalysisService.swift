@@ -100,7 +100,12 @@ class FoodAnalysisService: ObservableObject {
     @Published var errorMessage: String?
     
     private let baseURL = "https://precious-presence-production.up.railway.app" // Railway backend URL
-    private let session = URLSession.shared
+    private let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30.0 // 30 second timeout
+        config.timeoutIntervalForResource = 60.0 // 60 second total timeout
+        return URLSession(configuration: config)
+    }()
     
     func analyzeFoodImage(_ image: UIImage) async throws -> FoodAnalysis {
         print("🌐 FoodAnalysisService: Starting analysis...")
@@ -129,8 +134,11 @@ class FoodAnalysisService: ObservableObject {
             let boundary = UUID().uuidString
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
             
-            // Convert image to JPEG data
-            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            // Resize image for faster processing (max 1024px)
+            let resizedImage = image.resized(to: CGSize(width: 1024, height: 1024))
+            
+            // Convert image to JPEG data with optimized compression
+            guard let imageData = resizedImage.jpegData(compressionQuality: 0.6) else {
                 throw FoodAnalysisError.noImage
             }
             
@@ -239,6 +247,16 @@ class FoodAnalysisService: ObservableObject {
         
         let suggestionsResponse = try JSONDecoder().decode(NutritionSuggestionsResponse.self, from: data)
         return suggestionsResponse.suggestions
+    }
+}
+
+// MARK: - UIImage Extension for Resizing
+extension UIImage {
+    func resized(to size: CGSize) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: size))
+        }
     }
 }
 

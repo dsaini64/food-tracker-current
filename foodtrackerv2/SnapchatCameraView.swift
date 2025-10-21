@@ -103,9 +103,16 @@ struct SnapchatCameraView: View {
                     .disabled(foodRecognition.isAnalyzing)
                     
                     if foodRecognition.isAnalyzing {
-                        ProgressView("Analyzing...")
-                            .foregroundColor(.white)
-                            .font(.caption)
+                        VStack(spacing: 4) {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                            
+                            Text(foodRecognition.analysisProgress.isEmpty ? "Analyzing..." : foodRecognition.analysisProgress)
+                                .foregroundColor(.white)
+                                .font(.caption)
+                                .multilineTextAlignment(.center)
+                        }
                     }
                 }
                 .padding(.bottom, 30)

@@ -7,6 +7,7 @@ class FoodRecognitionService: ObservableObject {
     @Published var isAnalyzing = false
     @Published var recognitionResult: FoodRecognitionResult?
     @Published var errorMessage: String?
+    @Published var analysisProgress: String = ""
     
     private let foodAnalysisService = FoodAnalysisService()
     
@@ -18,15 +19,23 @@ class FoodRecognitionService: ObservableObject {
         DispatchQueue.main.async {
             self.isAnalyzing = true
             self.errorMessage = nil
+            self.analysisProgress = "Preparing image..."
         }
         
         // Start analysis immediately without delay
         Task {
             do {
+                // Update progress
+                await MainActor.run {
+                    self.analysisProgress = "Sending to server..."
+                }
+                
                 print("🍎 Sending image to backend...")
                 let analysis = try await foodAnalysisService.analyzeFoodImage(image)
                 print("🍎 Received analysis from backend: \(analysis)")
+                
                 await MainActor.run {
+                    self.analysisProgress = "Processing results..."
                     self.processAnalysis(analysis, image: image, mealType: mealType)
                 }
             } catch {
@@ -34,6 +43,7 @@ class FoodRecognitionService: ObservableObject {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                     self.isAnalyzing = false
+                    self.analysisProgress = ""
                 }
             }
         }
