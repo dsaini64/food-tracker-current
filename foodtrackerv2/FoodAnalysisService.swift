@@ -99,7 +99,7 @@ class FoodAnalysisService: ObservableObject {
     @Published var lastAnalysis: FoodAnalysis?
     @Published var errorMessage: String?
     
-    private let baseURL = "https://food-tracker.com" // Railway backend URL
+    private let baseURL = "https://precious-presence-production.up.railway.app" // Railway backend URL
     private let session = URLSession.shared
     
     func analyzeFoodImage(_ image: UIImage) async throws -> FoodAnalysis {
