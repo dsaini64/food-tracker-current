@@ -20,9 +20,8 @@ class FoodRecognitionService: ObservableObject {
             self.errorMessage = nil
         }
         
-        // Small delay to ensure UI updates before starting analysis
+        // Start analysis immediately without delay
         Task {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
             do {
                 print("🍎 Sending image to backend...")
                 let analysis = try await foodAnalysisService.analyzeFoodImage(image)
