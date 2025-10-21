@@ -80,6 +80,12 @@ struct SnapchatCameraView: View {
                                 .padding(.vertical, 4)
                                 .background(Color.black.opacity(0.3))
                                 .cornerRadius(8)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button("Delete", role: .destructive) {
+                                        analysis.dailyLog.removeFoodItem(item)
+                                    }
+                                    .tint(.red)
+                                }
                             }
                         }
                         .padding(.horizontal, 20)

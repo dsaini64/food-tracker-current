@@ -103,7 +103,7 @@ struct HealthInsightsView: View {
             VStack(spacing: 12) {
                 PatternCard(
                     title: "Today's Foods",
-                    items: analysis.dailyLog.foodItems.map { $0.name },
+                    items: analysis.dailyLog.foodItems.reversed().map { $0.name },
                     icon: "fork.knife"
                 )
                 
@@ -120,7 +120,7 @@ struct HealthInsightsView: View {
                 
                 PatternCard(
                     title: "Health Scores",
-                    items: analysis.dailyLog.foodItems.map { "\($0.name): \($0.healthScore)/10" },
+                    items: analysis.dailyLog.foodItems.reversed().map { "\($0.name): \($0.healthScore)/10" },
                     icon: "heart.fill"
                 )
             }
