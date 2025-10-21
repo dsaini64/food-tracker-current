@@ -99,7 +99,7 @@ class FoodAnalysisService: ObservableObject {
     @Published var lastAnalysis: FoodAnalysis?
     @Published var errorMessage: String?
     
-    private let baseURL = "http://10.20.10.206:3000" // Local backend for testing
+    private let baseURL = "http://10.20.10.206:3000" // Local backend - Railway not working
     private let session = URLSession.shared
     
     func analyzeFoodImage(_ image: UIImage) async throws -> FoodAnalysis {
