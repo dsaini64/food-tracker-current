@@ -24,6 +24,7 @@ struct LiveCameraView: UIViewRepresentable {
         }
         
         // Handle flash toggle
+        print("🔦 LiveCameraView updateUIView called with isFlashOn: \(isFlashOn)")
         context.coordinator.setFlashMode(isFlashOn ? .on : .off)
     }
     
@@ -82,6 +83,7 @@ struct LiveCameraView: UIViewRepresentable {
                 self.captureDevice = backCamera
                 
                 // Set initial flash mode
+                print("🔦 Setting initial flash mode: \(parent.isFlashOn)")
                 self.setFlashMode(parent.isFlashOn ? .on : .off)
                 
                 // Start session on background queue
@@ -130,16 +132,26 @@ struct LiveCameraView: UIViewRepresentable {
         }
         
         func setFlashMode(_ mode: AVCaptureDevice.FlashMode) {
-            guard let device = captureDevice else { return }
+            print("🔦 setFlashMode called with mode: \(mode)")
+            guard let device = captureDevice else { 
+                print("🔦 No capture device available")
+                return 
+            }
+            
+            print("🔦 Device has flash: \(device.hasFlash)")
+            print("🔦 Current flash mode: \(device.flashMode)")
             
             do {
                 try device.lockForConfiguration()
                 if device.hasFlash {
                     device.flashMode = mode
+                    print("🔦 Flash mode set to: \(device.flashMode)")
+                } else {
+                    print("🔦 Device does not have flash capability")
                 }
                 device.unlockForConfiguration()
             } catch {
-                print("Error setting flash mode: \(error)")
+                print("🔦 Error setting flash mode: \(error)")
             }
         }
     }

@@ -43,7 +43,9 @@ struct SnapchatCameraView: View {
                     // Quick Actions
                     HStack(spacing: 20) {
                         Button(action: {
+                            print("🔦 Flash button tapped! Current state: \(isFlashOn)")
                             isFlashOn.toggle()
+                            print("🔦 Flash state changed to: \(isFlashOn)")
                         }) {
                             Image(systemName: isFlashOn ? "flashlight.on.fill" : "flashlight.off.fill")
                                 .font(.title2)
