@@ -57,6 +57,10 @@ struct ContentView: View {
                 dailyLog.addFoodItem(foodItem)
             }
         }
+        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
+            // Check for new day every minute
+            dailyLog.checkForNewDay()
+        }
     }
 }
 

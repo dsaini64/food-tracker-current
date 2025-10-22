@@ -40,6 +40,12 @@ class DailyFoodLog: ObservableObject {
     @Published var foodItems: [FoodItem] = []
     @Published var currentDate: Date = Date()
     
+    private let calendar = Calendar.current
+    
+    init() {
+        checkForNewDay()
+    }
+    
     var totalCalories: Double {
         foodItems.reduce(0) { $0 + $1.calories }
     }
@@ -62,6 +68,7 @@ class DailyFoodLog: ObservableObject {
     }
     
     func addFoodItem(_ item: FoodItem) {
+        checkForNewDay()
         foodItems.append(item)
     }
     
@@ -71,6 +78,19 @@ class DailyFoodLog: ObservableObject {
     
     func getFoodItems(for mealType: FoodItem.MealType) -> [FoodItem] {
         return foodItems.filter { $0.mealType == mealType }
+    }
+    
+    func checkForNewDay() {
+        let today = Date()
+        let todayComponents = calendar.dateComponents([.year, .month, .day], from: today)
+        let currentDateComponents = calendar.dateComponents([.year, .month, .day], from: currentDate)
+        
+        // If we're on a different day, reset the food items
+        if todayComponents != currentDateComponents {
+            print("🔄 New day detected! Resetting daily food log.")
+            foodItems.removeAll()
+            currentDate = today
+        }
     }
 }
 
