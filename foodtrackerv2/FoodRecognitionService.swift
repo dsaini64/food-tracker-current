@@ -20,23 +20,17 @@ class FoodRecognitionService: ObservableObject {
         DispatchQueue.main.async {
             self.isAnalyzing = true
             self.errorMessage = nil
-            self.analysisProgress = "Preparing image..."
+            self.analysisProgress = "Analyzing..."
         }
         
         // Start analysis immediately without delay
         Task {
             do {
-                // Update progress
-                await MainActor.run {
-                    self.analysisProgress = "Analyzing..."
-                }
-                
                 print("🍎 Sending image to backend...")
                 let analysis = try await foodAnalysisService.analyzeFoodImage(image)
                 print("🍎 Received analysis from backend: \(analysis)")
                 
                 await MainActor.run {
-                    self.analysisProgress = "Processing results..."
                     self.processAnalysis(analysis, image: image, mealType: mealType)
                 }
             } catch {
