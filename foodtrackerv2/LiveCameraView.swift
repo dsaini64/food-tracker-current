@@ -25,7 +25,7 @@ struct LiveCameraView: UIViewRepresentable {
         
         // Handle flash toggle
         print("🔦 LiveCameraView updateUIView called with isFlashOn: \(isFlashOn)")
-        context.coordinator.setFlashMode(isFlashOn ? .on : .off)
+        context.coordinator.setTorchMode(isFlashOn)
     }
     
     func makeCoordinator() -> Coordinator {
@@ -82,9 +82,9 @@ struct LiveCameraView: UIViewRepresentable {
                 self.photoOutput = output
                 self.captureDevice = backCamera
                 
-                // Set initial flash mode
-                print("🔦 Setting initial flash mode: \(parent.isFlashOn)")
-                self.setFlashMode(parent.isFlashOn ? .on : .off)
+                // Set initial torch mode
+                print("🔦 Setting initial torch mode: \(parent.isFlashOn)")
+                self.setTorchMode(parent.isFlashOn)
                 
                 // Start session on background queue
                 DispatchQueue.global(qos: .userInitiated).async {
@@ -152,6 +152,35 @@ struct LiveCameraView: UIViewRepresentable {
                 device.unlockForConfiguration()
             } catch {
                 print("🔦 Error setting flash mode: \(error)")
+            }
+        }
+        
+        func setTorchMode(_ isOn: Bool) {
+            print("🔦 setTorchMode called with isOn: \(isOn)")
+            guard let device = captureDevice else { 
+                print("🔦 No capture device available for torch")
+                return 
+            }
+            
+            print("🔦 Device has torch: \(device.hasTorch)")
+            print("🔦 Current torch level: \(device.torchLevel)")
+            
+            do {
+                try device.lockForConfiguration()
+                if device.hasTorch {
+                    if isOn {
+                        try device.setTorchModeOn(level: 1.0)
+                        print("🔦 Torch turned ON")
+                    } else {
+                        device.torchMode = .off
+                        print("🔦 Torch turned OFF")
+                    }
+                } else {
+                    print("🔦 Device does not have torch capability")
+                }
+                device.unlockForConfiguration()
+            } catch {
+                print("🔦 Error setting torch mode: \(error)")
             }
         }
     }
