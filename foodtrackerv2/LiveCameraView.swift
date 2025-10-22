@@ -81,6 +81,9 @@ struct LiveCameraView: UIViewRepresentable {
                 self.photoOutput = output
                 self.captureDevice = backCamera
                 
+                // Set initial flash mode
+                self.setFlashMode(parent.isFlashOn ? .on : .off)
+                
                 // Start session on background queue
                 DispatchQueue.global(qos: .userInitiated).async {
                     captureSession.startRunning()

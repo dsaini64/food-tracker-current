@@ -183,9 +183,5 @@ struct SnapchatCameraView: View {
                 }
             }
         }
-        .onTapGesture {
-            // Tap anywhere to capture
-            isCapturing = true
-        }
     }
 }
