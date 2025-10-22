@@ -102,12 +102,6 @@ struct HealthInsightsView: View {
             
             VStack(spacing: 12) {
                 PatternCard(
-                    title: "Today's Foods",
-                    items: analysis.dailyLog.foodItems.reversed().map { $0.name },
-                    icon: "fork.knife"
-                )
-                
-                PatternCard(
                     title: "Meal Distribution",
                     items: [
                         "Breakfast: \(analysis.dailyLog.getFoodItems(for: .breakfast).count) items",
@@ -119,9 +113,13 @@ struct HealthInsightsView: View {
                 )
                 
                 PatternCard(
-                    title: "Health Scores",
-                    items: analysis.dailyLog.foodItems.reversed().map { "\($0.name): \($0.healthScore)/10" },
-                    icon: "heart.fill"
+                    title: "Nutrition Trends",
+                    items: [
+                        "Average Health Score: \(String(format: "%.1f", analysis.overallHealthScore))/10",
+                        "Total Foods Today: \(analysis.dailyLog.foodItems.count)",
+                        "Calorie Goal Progress: \(Int(analysis.caloriesProgress * 100))%"
+                    ],
+                    icon: "chart.line.uptrend.xyaxis"
                 )
             }
         }

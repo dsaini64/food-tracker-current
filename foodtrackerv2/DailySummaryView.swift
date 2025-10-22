@@ -180,7 +180,7 @@ struct DailySummaryView: View {
                 .cornerRadius(12)
             } else {
                 List {
-                    ForEach(Array(analysis.dailyLog.foodItems.suffix(3))) { item in
+                    ForEach(Array(analysis.dailyLog.foodItems.suffix(3).reversed())) { item in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(item.name)
@@ -217,7 +217,7 @@ struct DailySummaryView: View {
                         .listRowBackground(Color.clear)
                     }
                     .onDelete { indexSet in
-                        let items = Array(analysis.dailyLog.foodItems.suffix(3))
+                        let items = Array(analysis.dailyLog.foodItems.suffix(3).reversed())
                         for index in indexSet {
                             if index < items.count {
                                 analysis.dailyLog.removeFoodItem(items[index])
