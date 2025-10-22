@@ -14,6 +14,7 @@ struct ContentView: View {
     @StateObject private var userProfile = UserProfile()
     @StateObject private var cameraPermissions = CameraPermissionManager()
     @StateObject private var foodRecognition = FoodRecognitionService()
+    @StateObject private var notificationManager = NotificationManager()
     
     @State private var capturedImage: UIImage?
     @State private var selectedTab = 0
@@ -51,6 +52,17 @@ struct ContentView: View {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                     Text("Insights")
                 }
+            
+            // Settings Tab
+            NotificationSettingsView(
+                userProfile: userProfile,
+                notificationManager: notificationManager
+            )
+            .tag(3)
+            .tabItem {
+                Image(systemName: "bell.fill")
+                Text("Settings")
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("FoodAnalyzed"))) { notification in
             if let foodItem = notification.object as? FoodItem {
@@ -60,6 +72,12 @@ struct ContentView: View {
         .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
             // Check for new day every minute
             dailyLog.checkForNewDay()
+        }
+        .onAppear {
+            // Request notification permission on app launch
+            if userProfile.notificationsEnabled {
+                notificationManager.requestNotificationPermission()
+            }
         }
     }
 }
