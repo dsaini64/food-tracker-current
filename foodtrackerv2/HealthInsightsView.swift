@@ -11,6 +11,61 @@ struct HealthInsightsView: View {
         case year = "Year"
     }
     
+    // MARK: - Computed Properties for Timeframe Filtering
+    private var filteredFoodItems: [FoodItem] {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        switch selectedTimeframe {
+        case .week:
+            let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+            return analysis.dailyLog.foodItems.filter { $0.timestamp >= weekAgo }
+        case .month:
+            let monthAgo = calendar.date(byAdding: .month, value: -1, to: now) ?? now
+            return analysis.dailyLog.foodItems.filter { $0.timestamp >= monthAgo }
+        case .year:
+            let yearAgo = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+            return analysis.dailyLog.foodItems.filter { $0.timestamp >= yearAgo }
+        }
+    }
+    
+    private var filteredCalories: Double {
+        filteredFoodItems.reduce(0) { $0 + $1.calories }
+    }
+    
+    private var filteredProtein: Double {
+        filteredFoodItems.reduce(0) { $0 + $1.protein }
+    }
+    
+    private var filteredHealthScore: Double {
+        guard !filteredFoodItems.isEmpty else { return 0 }
+        return Double(filteredFoodItems.reduce(0) { $0 + $1.healthScore }) / Double(filteredFoodItems.count)
+    }
+    
+    private var timeframeDescription: String {
+        switch selectedTimeframe {
+        case .week:
+            return "Last 7 days"
+        case .month:
+            return "Last 30 days"
+        case .year:
+            return "Last 365 days"
+        }
+    }
+    
+    private func healthScoreColor(for score: Double) -> Color {
+        switch score {
+        case 8...10:
+            return .green
+        case 6..<8:
+            return .yellow
+        case 4..<6:
+            return .orange
+        default:
+            return .red
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -53,36 +108,41 @@ struct HealthInsightsView: View {
             Text("Health Trends")
                 .font(.headline)
             
-            // Real-time data from daily log
+            // Filtered data based on selected timeframe
             VStack(spacing: 12) {
+                Text(timeframeDescription)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 8)
+                
                 TrendCard(
                     title: "Average Health Score",
-                    currentValue: analysis.overallHealthScore,
-                    previousValue: max(0, analysis.overallHealthScore - 0.5),
+                    currentValue: filteredHealthScore,
+                    previousValue: max(0, filteredHealthScore - 0.5),
                     unit: "/10",
-                    color: analysis.healthScoreColor
+                    color: healthScoreColor(for: filteredHealthScore)
                 )
                 
                 TrendCard(
-                    title: "Daily Calories",
-                    currentValue: analysis.dailyLog.totalCalories,
-                    previousValue: max(0, analysis.dailyLog.totalCalories - 50),
+                    title: "Total Calories",
+                    currentValue: filteredCalories,
+                    previousValue: max(0, filteredCalories - 100),
                     unit: "kcal",
                     color: .blue
                 )
                 
                 TrendCard(
-                    title: "Protein Intake",
-                    currentValue: analysis.dailyLog.totalProtein,
-                    previousValue: max(0, analysis.dailyLog.totalProtein - 10),
+                    title: "Total Protein",
+                    currentValue: filteredProtein,
+                    previousValue: max(0, filteredProtein - 20),
                     unit: "g",
                     color: .green
                 )
                 
                 TrendCard(
-                    title: "Food Items Today",
-                    currentValue: Double(analysis.dailyLog.foodItems.count),
-                    previousValue: max(0, Double(analysis.dailyLog.foodItems.count) - 1),
+                    title: "Food Items",
+                    currentValue: Double(filteredFoodItems.count),
+                    previousValue: max(0, Double(filteredFoodItems.count) - 1),
                     unit: "items",
                     color: .purple
                 )
@@ -104,10 +164,10 @@ struct HealthInsightsView: View {
                 PatternCard(
                     title: "Meal Distribution",
                     items: [
-                        "Breakfast: \(analysis.dailyLog.getFoodItems(for: .breakfast).count) items",
-                        "Lunch: \(analysis.dailyLog.getFoodItems(for: .lunch).count) items", 
-                        "Dinner: \(analysis.dailyLog.getFoodItems(for: .dinner).count) items",
-                        "Snacks: \(analysis.dailyLog.getFoodItems(for: .snack).count) items"
+                        "Breakfast: \(filteredFoodItems.filter { $0.mealType == .breakfast }.count) items",
+                        "Lunch: \(filteredFoodItems.filter { $0.mealType == .lunch }.count) items", 
+                        "Dinner: \(filteredFoodItems.filter { $0.mealType == .dinner }.count) items",
+                        "Snacks: \(filteredFoodItems.filter { $0.mealType == .snack }.count) items"
                     ],
                     icon: "clock"
                 )
@@ -115,9 +175,9 @@ struct HealthInsightsView: View {
                 PatternCard(
                     title: "Nutrition Trends",
                     items: [
-                        "Average Health Score: \(String(format: "%.1f", analysis.overallHealthScore))/10",
-                        "Total Foods Today: \(analysis.dailyLog.foodItems.count)",
-                        "Calorie Goal Progress: \(Int(analysis.caloriesProgress * 100))%"
+                        "Average Health Score: \(String(format: "%.1f", filteredHealthScore))/10",
+                        "Total Foods: \(filteredFoodItems.count)",
+                        "Average Daily Calories: \(String(format: "%.0f", filteredCalories / max(1, Double(selectedTimeframe == .week ? 7 : selectedTimeframe == .month ? 30 : 365))))"
                     ],
                     icon: "chart.line.uptrend.xyaxis"
                 )
@@ -136,46 +196,43 @@ struct HealthInsightsView: View {
                 .font(.headline)
             
             VStack(spacing: 12) {
-                // Protein recommendation based on actual progress
-                if analysis.proteinProgress < 0.8 {
-                    RecommendationCard(
-                        title: "Increase Protein",
-                        description: "You're at \(Int(analysis.proteinProgress * 100))% of your protein goal",
-                        action: "Add lean proteins like chicken or fish",
-                        color: .green
-                    )
-                }
-                
-                // Calorie recommendation
-                if analysis.caloriesProgress < 0.7 {
-                    RecommendationCard(
-                        title: "Add More Calories",
-                        description: "You're at \(Int(analysis.caloriesProgress * 100))% of your calorie goal",
-                        action: "Consider a healthy snack",
-                        color: .blue
-                    )
-                } else if analysis.caloriesProgress > 1.2 {
-                    RecommendationCard(
-                        title: "Calorie Balance",
-                        description: "You've exceeded your daily calorie goal",
-                        action: "Consider lighter options for remaining meals",
-                        color: .orange
-                    )
-                }
-                
-                // Health score recommendation
-                if analysis.overallHealthScore < 6 {
+                // Health score recommendation based on filtered data
+                if filteredHealthScore < 6 {
                     RecommendationCard(
                         title: "Improve Food Choices",
-                        description: "Your average health score is \(String(format: "%.1f", analysis.overallHealthScore))/10",
+                        description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
                         action: "Add more vegetables and whole foods",
                         color: .red
                     )
+                } else if filteredHealthScore >= 8 {
+                    RecommendationCard(
+                        title: "Excellent Health Choices!",
+                        description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
+                        action: "Keep up the excellent choices!",
+                        color: .green
+                    )
                 } else {
                     RecommendationCard(
-                        title: "Great Job!",
-                        description: "Your health score is \(String(format: "%.1f", analysis.overallHealthScore))/10",
-                        action: "Keep up the excellent choices!",
+                        title: "Good Progress",
+                        description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
+                        action: "Continue making healthy choices",
+                        color: .yellow
+                    )
+                }
+                
+                // Activity level recommendation
+                if filteredFoodItems.count < 3 {
+                    RecommendationCard(
+                        title: "Track More Foods",
+                        description: "You've logged \(filteredFoodItems.count) foods in the \(timeframeDescription.lowercased())",
+                        action: "Take more photos to get better insights",
+                        color: .blue
+                    )
+                } else if filteredFoodItems.count > 20 {
+                    RecommendationCard(
+                        title: "Great Tracking!",
+                        description: "You've logged \(filteredFoodItems.count) foods in the \(timeframeDescription.lowercased())",
+                        action: "Your detailed tracking is helping your health",
                         color: .green
                     )
                 }
