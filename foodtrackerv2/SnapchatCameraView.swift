@@ -8,6 +8,7 @@ struct SnapchatCameraView: View {
     @State private var showingImagePicker = false
     @State private var capturedImage: UIImage?
     @State private var isFlashOn = false
+    @State private var showCaptureFeedback = false
     
     var body: some View {
         ZStack {
@@ -95,6 +96,12 @@ struct SnapchatCameraView: View {
                 VStack(spacing: 8) {
                     Button(action: {
                         isCapturing = true
+                        // Show immediate feedback
+                        showCaptureFeedback = true
+                        // Hide feedback after a short delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            showCaptureFeedback = false
+                        }
                     }) {
                         ZStack {
                             // Outer ring
@@ -110,6 +117,23 @@ struct SnapchatCameraView: View {
                     }
                     .disabled(foodRecognition.isAnalyzing)
                     
+                    // Immediate capture feedback
+                    if showCaptureFeedback {
+                        VStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.green)
+                                .scaleEffect(1.2)
+                            
+                            Text("Photo Captured!")
+                                .foregroundColor(.white)
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                    
+                    // Analysis progress
                     if foodRecognition.isAnalyzing {
                         VStack(spacing: 4) {
                             ProgressView()
@@ -124,6 +148,16 @@ struct SnapchatCameraView: View {
                     }
                 }
                 .padding(.bottom, 30)
+            }
+            
+            // Flash effect overlay
+            if showCaptureFeedback {
+                Rectangle()
+                    .fill(Color.white)
+                    .opacity(0.3)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .animation(.easeOut(duration: 0.1), value: showCaptureFeedback)
             }
             
             // Analysis Results Overlay
