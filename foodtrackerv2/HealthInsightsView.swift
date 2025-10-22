@@ -196,45 +196,55 @@ struct HealthInsightsView: View {
                 .font(.headline)
             
             VStack(spacing: 12) {
-                // Health score recommendation based on filtered data
-                if filteredHealthScore < 6 {
+                // Check if no food has been logged
+                if filteredFoodItems.isEmpty {
                     RecommendationCard(
-                        title: "Improve Food Choices",
-                        description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
-                        action: "Add more vegetables and whole foods",
-                        color: .red
-                    )
-                } else if filteredHealthScore >= 8 {
-                    RecommendationCard(
-                        title: "Excellent Health Choices!",
-                        description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
-                        action: "Keep up the excellent choices!",
-                        color: .green
-                    )
-                } else {
-                    RecommendationCard(
-                        title: "Good Progress",
-                        description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
-                        action: "Continue making healthy choices",
-                        color: .yellow
-                    )
-                }
-                
-                // Activity level recommendation
-                if filteredFoodItems.count < 3 {
-                    RecommendationCard(
-                        title: "Track More Foods",
-                        description: "You've logged \(filteredFoodItems.count) foods in the \(timeframeDescription.lowercased())",
-                        action: "Take more photos to get better insights",
+                        title: "Start Tracking Your Food",
+                        description: "Take photos of your meals to get personalized insights and recommendations",
+                        action: "Use the camera to snap your first food photo",
                         color: .blue
                     )
-                } else if filteredFoodItems.count > 20 {
-                    RecommendationCard(
-                        title: "Great Tracking!",
-                        description: "You've logged \(filteredFoodItems.count) foods in the \(timeframeDescription.lowercased())",
-                        action: "Your detailed tracking is helping your health",
-                        color: .green
-                    )
+                } else {
+                    // Health score recommendation based on filtered data
+                    if filteredHealthScore < 6 {
+                        RecommendationCard(
+                            title: "Improve Food Choices",
+                            description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
+                            action: "Add more vegetables and whole foods",
+                            color: .red
+                        )
+                    } else if filteredHealthScore >= 8 {
+                        RecommendationCard(
+                            title: "Excellent Health Choices!",
+                            description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
+                            action: "Keep up the excellent choices!",
+                            color: .green
+                        )
+                    } else {
+                        RecommendationCard(
+                            title: "Good Progress",
+                            description: "Your \(timeframeDescription.lowercased()) health score is \(String(format: "%.1f", filteredHealthScore))/10",
+                            action: "Continue making healthy choices",
+                            color: .yellow
+                        )
+                    }
+                    
+                    // Activity level recommendation
+                    if filteredFoodItems.count < 3 {
+                        RecommendationCard(
+                            title: "Track More Foods",
+                            description: "You've logged \(filteredFoodItems.count) foods in the \(timeframeDescription.lowercased())",
+                            action: "Take more photos to get better insights",
+                            color: .blue
+                        )
+                    } else if filteredFoodItems.count > 20 {
+                        RecommendationCard(
+                            title: "Great Tracking!",
+                            description: "You've logged \(filteredFoodItems.count) foods in the \(timeframeDescription.lowercased())",
+                            action: "Your detailed tracking is helping your health",
+                            color: .green
+                        )
+                    }
                 }
             }
         }
