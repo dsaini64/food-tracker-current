@@ -50,7 +50,11 @@ struct SnapchatCameraView: View {
                             Image(systemName: isFlashOn ? "flashlight.on.fill" : "flashlight.off.fill")
                                 .font(.title2)
                                 .foregroundColor(isFlashOn ? .yellow : .white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(22)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(.horizontal, 20)
