@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		13E5CEC12E9DA211004ACAFA /* foodtrackerv2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = foodtrackerv2.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13E5CEC12E9DA211004ACAFA /* HelloFam Food.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HelloFam Food.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -40,7 +40,7 @@
 		13E5CEC22E9DA211004ACAFA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13E5CEC12E9DA211004ACAFA /* foodtrackerv2.app */,
+				13E5CEC12E9DA211004ACAFA /* HelloFam Food.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13E5CEC02E9DA211004ACAFA /* foodtrackerv2 */ = {
+		13E5CEC02E9DA211004ACAFA /* HelloFam Food */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13E5CECC2E9DA212004ACAFA /* Build configuration list for PBXNativeTarget "foodtrackerv2" */;
+			buildConfigurationList = 13E5CECC2E9DA212004ACAFA /* Build configuration list for PBXNativeTarget "HelloFam Food" */;
 			buildPhases = (
 				13E5CEBD2E9DA211004ACAFA /* Sources */,
 				13E5CEBE2E9DA211004ACAFA /* Frameworks */,
@@ -63,11 +63,11 @@
 			fileSystemSynchronizedGroups = (
 				13E5CEC32E9DA211004ACAFA /* foodtrackerv2 */,
 			);
-			name = foodtrackerv2;
+			name = "HelloFam Food";
 			packageProductDependencies = (
 			);
 			productName = foodtrackerv2;
-			productReference = 13E5CEC12E9DA211004ACAFA /* foodtrackerv2.app */;
+			productReference = 13E5CEC12E9DA211004ACAFA /* HelloFam Food.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 13E5CEBC2E9DA211004ACAFA /* Build configuration list for PBXProject "foodtrackerv2" */;
+			buildConfigurationList = 13E5CEBC2E9DA211004ACAFA /* Build configuration list for PBXProject "HelloFam Food" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +99,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13E5CEC02E9DA211004ACAFA /* foodtrackerv2 */,
+				13E5CEC02E9DA211004ACAFA /* HelloFam Food */,
 			);
 		};
 /* End PBXProject section */
@@ -321,7 +321,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13E5CEBC2E9DA211004ACAFA /* Build configuration list for PBXProject "foodtrackerv2" */ = {
+		13E5CEBC2E9DA211004ACAFA /* Build configuration list for PBXProject "HelloFam Food" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13E5CECA2E9DA212004ACAFA /* Debug */,
@@ -330,7 +330,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		13E5CECC2E9DA212004ACAFA /* Build configuration list for PBXNativeTarget "foodtrackerv2" */ = {
+		13E5CECC2E9DA212004ACAFA /* Build configuration list for PBXNativeTarget "HelloFam Food" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13E5CECD2E9DA212004ACAFA /* Debug */,

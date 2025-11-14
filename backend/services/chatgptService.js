@@ -9,8 +9,11 @@ class ChatGPTService {
 
   async analyzeFoodImage(base64Image) {
     try {
-      console.log('🤖 ChatGPT Service: Starting analysis...');
-      console.log('🤖 Image size:', base64Image.length, 'characters');
+      // Reduced logging for production performance
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🤖 ChatGPT Service: Starting analysis...');
+        console.log('🤖 Image size:', base64Image.length, 'characters');
+      }
       
       const prompt = `
         Analyze this food image and provide detailed nutrition information. 
@@ -22,7 +25,7 @@ class ChatGPTService {
         4. Nutritional content for each item
         
         For each food item, provide:
-        - name: Clear, specific food name
+        - name: Clear, SPECIFIC food name with details (e.g., "red apple" not just "apple", "grilled chicken breast" not just "chicken", "steamed broccoli" not just "broccoli"). Include color, preparation method, or other distinguishing features when visible.
         - calories: Estimated calories per serving
         - protein: Protein in grams
         - carbs: Carbohydrates in grams  
@@ -32,6 +35,9 @@ class ChatGPTService {
         - confidence: Your confidence level (0-1)
         - cooking_method: How the food appears to be prepared
         - health_notes: Any health considerations or tips
+        - ingredients: Array of main ingredients detected (e.g., ["chicken", "rice", "broccoli"])
+        - portion_size: Estimated portion size as "small", "medium", or "large" based on visual appearance
+        - macro_guess: Primary macronutrient appearance as "carb-heavy", "protein-rich", "fat-heavy", or "balanced" based on visual characteristics
         
         Return the response as a JSON object with this structure:
         {
@@ -46,7 +52,10 @@ class ChatGPTService {
               "serving_size": "string",
               "confidence": number,
               "cooking_method": "string",
-              "health_notes": "string"
+              "health_notes": "string",
+              "ingredients": ["string"],
+              "portion_size": "small" | "medium" | "large",
+              "macro_guess": "carb-heavy" | "protein-rich" | "fat-heavy" | "balanced"
             }
           ],
           "overall_confidence": number,
@@ -57,7 +66,9 @@ class ChatGPTService {
         Be as accurate as possible with nutrition estimates. Consider the visual portion size and cooking method.
       `;
 
-      console.log('🤖 Calling OpenAI API...');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🤖 Calling OpenAI API...');
+      }
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -72,20 +83,22 @@ class ChatGPTService {
                 type: "image_url",
                 image_url: {
                   url: `data:image/jpeg;base64,${base64Image}`,
-                  detail: "high"
+                  detail: "auto" // Auto selects optimal detail level for faster processing
                 }
               }
             ]
           }
         ],
-        max_tokens: 2000,
+        max_tokens: 1500, // Reduced from 2000 for faster responses
         temperature: 0.3
       });
       
-      console.log('🤖 OpenAI API response received');
-
       const content = response.choices[0].message.content;
-      console.log('🤖 Raw ChatGPT response:', content);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🤖 OpenAI API response received');
+        console.log('🤖 Raw ChatGPT response:', content);
+      }
       
       // Parse JSON response
       let analysis;
@@ -96,9 +109,13 @@ class ChatGPTService {
           analysis = JSON.parse(jsonMatch[0]);
           
           // Add IDs to foods if they don't have them
+          // Also ensure optional fields have defaults
           if (analysis.foods && Array.isArray(analysis.foods)) {
             analysis.foods = analysis.foods.map((food, index) => ({
               id: food.id || `food_${Date.now()}_${index}`,
+              ingredients: food.ingredients || [],
+              portion_size: food.portion_size || 'medium',
+              macro_guess: food.macro_guess || 'balanced',
               ...food
             }));
           }
@@ -111,6 +128,13 @@ class ChatGPTService {
           if (analysis.image_description !== undefined) {
             analysis.imageDescription = analysis.image_description;
             delete analysis.image_description;
+          }
+          
+          // Process foods array
+          if (analysis.foods && Array.isArray(analysis.foods)) {
+            analysis.foods = analysis.foods.map(food => {
+              return food;
+            });
           }
         } else {
           throw new Error('No JSON found in response');
@@ -138,6 +162,13 @@ class ChatGPTService {
           imageDescription: "Unable to analyze image",
           suggestions: ["Try taking a clearer photo with better lighting"]
         };
+        
+        // Process fallback response
+        if (analysis.foods && Array.isArray(analysis.foods)) {
+          analysis.foods = analysis.foods.map(food => {
+            return food;
+          });
+        }
       }
 
       return analysis;

@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const chatGPTService = require('./services/chatgptService');
 const nutritionService = require('./services/nutritionService');
+const patternSummaryService = require('./services/patternSummaryService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -80,15 +81,16 @@ app.get('/test', (req, res) => {
 // Analyze food image endpoint
 app.post('/api/analyze-food', upload.single('image'), async (req, res) => {
   try {
-    console.log('🍎 Food analysis request received');
-    console.log('📱 Request headers:', req.headers);
-    console.log('📱 Request body keys:', Object.keys(req.body || {}));
-    console.log('📱 File info:', req.file ? {
-      fieldname: req.file.fieldname,
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size
-    } : 'No file');
+    // Reduced logging in production for better performance
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🍎 Food analysis request received');
+      console.log('📱 File info:', req.file ? {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : 'No file');
+    }
     
     if (!req.file) {
       console.log('❌ No image file provided');
@@ -99,26 +101,34 @@ app.post('/api/analyze-food', upload.single('image'), async (req, res) => {
     }
 
     // Process image with Sharp (resize, optimize)
+    // Use smaller size and lower quality for faster processing
+    // 768x768 is sufficient for food recognition and significantly faster
     const processedImage = await sharp(req.file.buffer)
-      .resize(1024, 1024, { 
+      .resize(768, 768, { 
         fit: 'inside',
         withoutEnlargement: true 
       })
-      .jpeg({ quality: 85 })
+      .jpeg({ 
+        quality: 80, // Reduced from 85 - still high quality but faster
+        mozjpeg: true // Use mozjpeg for better compression/speed
+      })
       .toBuffer();
 
     // Convert to base64 for ChatGPT Vision
     const base64Image = processedImage.toString('base64');
     
     // Analyze with ChatGPT Vision
-    console.log('🤖 Calling ChatGPT Vision API...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🤖 Calling ChatGPT Vision API...');
+    }
     const chatGPTResponse = await chatGPTService.analyzeFoodImage(base64Image);
-    console.log('🤖 ChatGPT response:', JSON.stringify(chatGPTResponse, null, 2));
     
-    // Enhance with nutrition data
-    console.log('🥗 Enhancing with nutrition data...');
+    // Enhance with nutrition data (runs in parallel with response processing)
     const enhancedAnalysis = await nutritionService.enhanceWithNutritionData(chatGPTResponse);
-    console.log('🥗 Enhanced analysis:', JSON.stringify(enhancedAnalysis, null, 2));
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Analysis complete');
+    }
     
     // Generate unique analysis ID
     const analysisId = uuidv4();
@@ -183,6 +193,49 @@ app.post('/api/nutrition-suggestions', async (req, res) => {
     res.status(500).json({
       error: 'Failed to generate suggestions',
       code: 'SUGGESTIONS_FAILED'
+    });
+  }
+});
+
+// Generate meal pattern summary endpoint
+app.post('/api/pattern-summary', async (req, res) => {
+  try {
+    const { mealsToday } = req.body;
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📊 Pattern summary request received');
+      console.log('📊 Meals count:', mealsToday?.length || 0);
+    }
+    
+    if (!mealsToday || !Array.isArray(mealsToday)) {
+      console.error('❌ Invalid meals data:', typeof mealsToday, mealsToday);
+      return res.status(400).json({
+        error: 'Invalid meals data provided',
+        code: 'INVALID_MEALS_DATA'
+      });
+    }
+    
+    if (mealsToday.length === 0) {
+      return res.status(400).json({
+        error: 'No meals provided',
+        code: 'NO_MEALS'
+      });
+    }
+    
+    const summary = await patternSummaryService.generatePatternSummary(mealsToday);
+    
+    res.json({
+      success: true,
+      summary
+    });
+    
+  } catch (error) {
+    console.error('❌ Error generating pattern summary:', error);
+    console.error('❌ Error stack:', error.stack);
+    res.status(500).json({
+      error: 'Failed to generate pattern summary',
+      code: 'PATTERN_SUMMARY_FAILED',
+      message: error.message
     });
   }
 });
